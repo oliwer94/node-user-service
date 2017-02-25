@@ -1,0 +1,20 @@
+{
+    "test": {
+        "PORT": 3000,
+        "MONGODB_URI": "",
+        "JWT_SECRET":"",
+        "GMAIL_USERNAME":"",
+        "GMAIL_PASSWORD":"",
+        "SITE_URL":""
+    },
+    "development": {
+        "PORT": 3000,
+        "MONGODB_URI": "",
+        "JWT_SECRET":"",
+        "GMAIL_USERNAME":"",
+        "GMAIL_PASSWORD":"",
+        "SITE_URL":""
+    }    
+}
+
+//for production you have to add  these as environment variables.
