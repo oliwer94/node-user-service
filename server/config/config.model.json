@@ -5,7 +5,8 @@
         "JWT_SECRET":"",
         "GMAIL_USERNAME":"",
         "GMAIL_PASSWORD":"",
-        "SITE_URL":""
+        "SITE_URL":"",
+        "MAIN_API_URL":""
     },
     "development": {
         "PORT": 3000,
@@ -13,7 +14,8 @@
         "JWT_SECRET":"",
         "GMAIL_USERNAME":"",
         "GMAIL_PASSWORD":"",
-        "SITE_URL":""
+        "SITE_URL":"",
+        "MAIN_API_URL":""
     }    
 }
 

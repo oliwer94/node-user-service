@@ -117,7 +117,7 @@ app.post('/login', (req, res) => {
             res.cookie('token', token);
             res.send(200);
 
-            axios.post('http://127.0.0.1:3001/addUser', {
+            axios.post(process.env.MAIN_API_URL+'/addUser', {
                 token: token,
                 id: user._id
             })
@@ -140,7 +140,7 @@ app.get('/me/logout', authenticate, (req, res) => {
 
         res.status(200).send();
 
-        axios.post('http://127.0.0.1:3001/removeUser', {
+        axios.post(process.env.MAIN_API_URL+'/removeUser', {
             token: req.token,
             _id: req.user._id
         })
