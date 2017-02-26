@@ -33,7 +33,7 @@ app.post('/register', (req, res) => {
         .then((token) => {
             sendVerificationEmail(user.email, token);
             //res.header('x-auth', token).send(user);
-            res.sendStatus(200);
+            res.status(200).send(user);;
         }).catch((e) => {
             res.status(400).send(e);
         });
@@ -80,8 +80,6 @@ function sendVerificationEmail(email, token) {
 
 }
 
-
-
 app.get('/users/verify/:id', (req, res) => {
 
     var token = req.params.id;
@@ -115,19 +113,14 @@ app.post('/login', (req, res) => {
     User.findByCredentials(body.email, body.password).then((user) => {
         return user.generateAuthToken().then((token) => {
             res.cookie('token', token);
-            res.send(200);
+            res.sendStatus(200);
 
-            axios.post(process.env.MAIN_API_URL+'/addUser', {
+            axios.post(process.env.MAIN_API_URL + '/addUser', {
                 token: token,
                 id: user._id
-            })
-                .then(function (response) {
-                    console.log(response.status);
-                })
-                .catch(function (error) {
+            }).catch(function (error) {
                     console.log(error);
                 });
-            //  res.header('x-auth', token).send(user);
         });
     })
         .catch((e) => { res.sendStatus(400); });
@@ -135,27 +128,18 @@ app.post('/login', (req, res) => {
 
 //Delte users/me/logout
 app.get('/me/logout', authenticate, (req, res) => {
-    console.log('trying to log out');
+
     req.user.removeToken(req.token).then(() => {
-
         res.status(200).send();
-
-        axios.post(process.env.MAIN_API_URL+'/removeUser', {
+        axios.post(process.env.MAIN_API_URL + '/removeUser', {
             token: req.token,
             _id: req.user._id
-        })
-            .then(function (response) {
-                console.log(response);
-            })
-            .catch(function (error) {
+        }).catch(function (error) {
                 console.log(error);
             });
 
     }, () => { res.status(400).send(); });
 });
-
-
-
 
 app.listen(PORT, () => {
     console.log("Started on port ", PORT);

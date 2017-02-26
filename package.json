@@ -24,7 +24,7 @@
   "scripts": {
     "start": "node server/server.js",
     "test": "export NODE_ENV=test || SET \"NODE_ENV=test\" && mocha server/**/*.test.js",
-    "test-watch": "nodemon --exec 'test'"
+    "watch": "nodemon --exec 'test'"
   },
   "devDependencies": {
     "expect": "^1.20.2",
