@@ -21,26 +21,15 @@ var UserSchema = new mongoose.Schema(
             type: String,
             required: true,
             minlength: 6
-        }, 
+        },
         verified: {
             type: Boolean,
             required: true,
         },
-         active: {
+        active: {
             type: Boolean,
             required: false,
-        },
-        tokens: [{
-            access: {
-                type: String,
-                required: true
-            },
-            token: {
-                type: String,
-                required: true
-            }
-        }]
-
+        }
     }
 );
 
@@ -65,7 +54,7 @@ UserSchema.methods.toJSON = function () {
     var user = this;
     var userObject = user.toObject();
 
-    return _.pick(user, ['_id', 'email','password','tokens']);
+    return _.pick(user, ['_id', 'email', 'password', 'tokens']);
 };
 
 UserSchema.methods.generateAuthToken = function () {
@@ -93,7 +82,7 @@ UserSchema.statics.findByCredentials = function (email, password) {
             bcrypt.compare(password, user.password, (err, res) => {
                 if (res) {
                     resolve(user);
-                } else {                     
+                } else {
                     reject();
                 }
             });
@@ -101,10 +90,10 @@ UserSchema.statics.findByCredentials = function (email, password) {
     });
 };
 
-UserSchema.methods.removeToken = function(token){
+UserSchema.methods.removeToken = function (token) {
 
     var user = this;
-   return  user.update({$pull: {tokens:{token}}});
+    return user.update({ $pull: { tokens: { token } } });
 }
 
 UserSchema.statics.findByToken = function (token) {
@@ -112,7 +101,7 @@ UserSchema.statics.findByToken = function (token) {
     var decoded;
 
     try {
-        decoded = jwt.verify(token,process.env.JWT_SECRET);
+        decoded = jwt.verify(token, process.env.JWT_SECRET);
     } catch (e) { return Promise.reject() };
 
     return User.findOne({ '_id': decoded._id, 'tokens.token': token, 'tokens.access': 'auth' });
