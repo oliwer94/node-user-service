@@ -53,6 +53,7 @@ UserAuthSchema.methods.removeToken = function () {
 UserAuthSchema.statics.findByToken = function (token) {
     var UserAuth = this;
     var decoded;
+    var asd;
 
     try {
         decoded = jwt.verify(token, process.env.JWT_SECRET);
