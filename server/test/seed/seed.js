@@ -1,11 +1,12 @@
 const {ObjectID} = require("mongodb");
 const jwt = require('jsonwebtoken');
 const {User} = require('./../../model/user');
+var user3id = new ObjectID();
 
 var testUsers = [
     { _id: new ObjectID(),verified: false, email: 'first@first.com', password: 'asd123' },
     { _id: new ObjectID(),verified: false, email: 'second@first.com', password: 'asd123' },
-    { _id: new ObjectID(),verified: true, email: 'third@first.com', password: 'asd123' }];
+    { _id: user3id,verified: true, email: 'third@first.com', password: 'asd123' }];
 
 const populateUsers = (done) => {
   User.remove({}).then(() => {
@@ -18,5 +19,5 @@ const populateUsers = (done) => {
 };
 
 module.exports = {
-    populateUsers,testUsers
-}
+    populateUsers,testUsers,user3id
+};

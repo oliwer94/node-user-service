@@ -256,7 +256,7 @@ describe('GET /login', () => {
             });
     });
 
-    it('should return a 400', (done) => {
+    it('should return a 400 becasue wrong password', (done) => {
 
         request(app)
             .post('/login')
