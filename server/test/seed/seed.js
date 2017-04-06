@@ -1,3 +1,4 @@
+/*jshint esversion: 6 */
 const {ObjectID} = require("mongodb");
 const jwt = require('jsonwebtoken');
 const {User} = require('./../../model/user');
@@ -14,7 +15,7 @@ const populateUsers = (done) => {
     var userTwo = new User(testUsers[1]).save();
     var userThree = new User(testUsers[2]).save();
 
-    return Promise.all([userOne, userTwo,userThree])
+    return Promise.all([userOne, userTwo,userThree]);
   }).then(() => done());
 };
 

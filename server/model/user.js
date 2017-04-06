@@ -1,3 +1,4 @@
+/*jshint esversion: 6 */
 const mongoose = require('mongoose');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
@@ -94,7 +95,7 @@ UserSchema.methods.removeToken = function (token) {
 
     var user = this;
     return user.update({ $pull: { tokens: { token } } });
-}
+};
 
 UserSchema.statics.findByToken = function (token) {
     var User = this;
@@ -102,7 +103,7 @@ UserSchema.statics.findByToken = function (token) {
 
     try {
         decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (e) { return Promise.reject() };
+    } catch (e) { return Promise.reject(); }
 
     return User.findOne({ '_id': decoded._id, 'tokens.token': token, 'tokens.access': 'auth' });
 };

@@ -1,12 +1,13 @@
 {
     "test": {
-        "PORT": 3000,
+        "PORT": 3001,
         "MONGODB_URI": "mongodb://localhost:27017/user-service-test",
         "JWT_SECRET":"fdspof4f8gh4gf88j4gf8j84df48sd84f8fh",
         "GMAIL_USERNAME":"noreply.meyespace@gmail.com",
         "GMAIL_PASSWORD":"bananbaszo94",
-        "SITE_URL":"http://localhost:3000",
-        "MAIN_API_URL":"http://localhost:3001"
+        "SITE_URL":"http://localhost:3001",
+        "AUTH_API_URL":"http://localhost:4000",
+        "STAT_API_URL":"http://localhost:5001"
     },
     "development": {
         "PORT": 3000,
@@ -15,6 +16,7 @@
         "GMAIL_USERNAME":"noreply.meyespace@gmail.com",
         "GMAIL_PASSWORD":"bananbaszo94",
         "SITE_URL":"http://localhost:3000",
-        "MAIN_API_URL":"http://localhost:3001"
+        "AUTH_API_URL":"http://localhost:4000",
+        "STAT_API_URL":"http://localhost:5000"
     }    
 }

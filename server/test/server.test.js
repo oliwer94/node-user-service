@@ -1,3 +1,4 @@
+/*jshint esversion: 6 */
 const expect = require('expect');
 const request = require('supertest');
 const {ObjectID} = require('mongodb');
@@ -42,7 +43,7 @@ describe('POST /register', () => {
 
     it('should not create user with an existing email', (done) => {
 
-        var email = testUsers[0].email;;
+        var email = testUsers[0].email;
         var password = 'vallidpw';
 
         request(app)
