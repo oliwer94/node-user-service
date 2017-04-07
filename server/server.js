@@ -20,44 +20,17 @@ var app = express();
 app.use(bodyParser.json());
 app.use(cookieParser());
 
-var addUserToCache = (token, _userId) => {
+const _addUserToCache = '/addUserToCache';
+const _removeUserFromCache = '/removeUserFromCache';
+const _getUserFromCache = '/getUserFromCache';
+const _saveUserToDb = '/saveUserToDb';
 
-    axios.post(process.env.AUTH_API_URL + '/addUserToCache', {
-        token: token,
-        id: _userId
-    }).catch(function (error) {
-        console.log(error);
-    });
-};
+var axiosPostCall = (url, action, body, callback) => {
 
-var removeUserFromCache = (token) => {
-
-    axios.post(process.env.AUTH_API_URL + '/removeUserFromCache', {
-        token: token
-    }).catch(function (error) {
-        console.log(error);
-    });
-};
-
-var updateUserInCache = (token, _userId) => {
-
-    axios.post(process.env.AUTH_API_URL + '/updateUserInCache', {
-        token: token,
-        id: _userId
-    }).catch(function (error) {
-        console.log(error);
-    });
-};
-
-var getUserFromCache = (token) => {
-
-    axios.post(process.env.AUTH_API_URL + '/getUserFromCache', {
-        token: token
-    }).then(function (response) {
-        return response.body._userId;
-    }).catch(function (error) {
-        console.log(error);
-    });
+axios.post(url + action, body)
+        .catch(function (error) {
+            console.log(error);
+        });
 };
 
 var auth = (req, res, next) => {
@@ -68,12 +41,11 @@ var auth = (req, res, next) => {
         req.StatusCode = response.status;
         next();
     }).catch(function (error) {
-        console.log(error);
+        console.log(error.message);
         req.StatusCode = error.response.status;
         next();
     });
 };
-
 
 //CREATE USER
 app.post('/register', (req, res) => {
@@ -83,47 +55,39 @@ app.post('/register', (req, res) => {
     user.verified = false;
     var token = jwt.sign({ _id: user._id.toHexString() + Date.now() }, process.env.JWT_SECRET).toString();
 
-    addUserToCache(token, user._id);
-
-
     user.save().then(() => {
 
         sendVerificationEmail(user.email, token);
-        //res.header('x-auth', token).send(user);
+        axiosPostCall(process.env.AUTH_API_URL, _addUserToCache, { token, "id": user._id });
+        axiosPostCall(process.env.STAT_API_URL, _saveUserToDb, { _userId: user._id });
         res.status(200).send(user);
-
-        axios.post(process.env.STAT_API_URL + '/saveUserToDb', {
-            _userId: user._id
-        }).catch(function (error) {
-            console.log(error);
-        });
 
     }).catch((e) => {
         res.status(400).send(e);
     });
 });
 
+//TODO: change FROM and TO to actual email addresses
 function sendVerificationEmail(email, token) {
     // setup email data with unicode symbols
 
     let mailOptions = {
         from: 'Oliwer <bananbaszo@gmail.com>', // sender address
         to: `oliwer94@gmail.com`,//`${email}`, // list of receivers
-        subject: 'Hello ✔', // Subject line
-        text: 'Hello world ?', // plain text body
-        html: `<b>Hello world ?</b> <a href="${process.env.SITE_URL}/users/verify/${token}" > verify account</a>`   // html body
+        subject: 'Welcome to Meyespace ✔', // Subject line
+        text: `Welcome to Meyespace ${email.split("@")[0]}! In order to verify your account please visit the following link ${process.env.SITE_URL}/users/verify/${token}`, // plain text body
+        html: `<b>Welcome to Meyespace !</b> <p>In order to verify your account please visit the following link: </p><a href="${process.env.SITE_URL}/users/verify/${token}" > VERIFY ACCOUNT</a>`   // html body
     };
-    // send mail with defined transport object
 
+    //in test mode I do not send the message
     if (process.env.NODE_ENV == 'test') {
-        //in test mode I do not send the message
         return Promise.resolve();
     }
     else {
+        // send mail with defined transport object
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
                 return Promise.reject(error);
-                // return console.log(error);
             }
             console.log('Message %s sent: %s', info.messageId, info.response);
             Promise.resolve();
@@ -131,25 +95,21 @@ function sendVerificationEmail(email, token) {
     }
 }
 
-app.get('/users/verify/:id', (req, res) => {
+app.get('/users/verify/:token', (req, res) => {
 
-    var token = req.params.id;
-    var _userId = "";
+    var token = req.params.token;
 
     axios.post(process.env.AUTH_API_URL + '/getUserFromCache', {
-        token: token
+        token
     }).then(function (response) {
-        _userId = response.data._userId;
-    }).then(() => {
-        if (_userId !== undefined) {
 
-            User.findById(_userId).then((user) => {
-
+        if (response.data._userId !== undefined) {
+            User.findById(response.data._userId).then((user) => {
                 user.verified = true;
 
                 user.save().then((user) => {
                     res.status(200).send("User has been verified");
-                    removeUserFromCache(token);
+                    axiosPostCall(process.env.AUTH_API_URL, _removeUserFromCache, { token });
                 });
             }).catch((e) => {
                 res.sendStatus(404);
@@ -163,7 +123,6 @@ app.get('/users/verify/:id', (req, res) => {
     });
 });
 
-
 //login with model side token generation
 app.post('/login', (req, res) => {
 
@@ -172,8 +131,7 @@ app.post('/login', (req, res) => {
     User.findByCredentials(body.email, body.password).then((user) => {
 
         var token = jwt.sign({ _id: user._id.toHexString() + Date.now() }, process.env.JWT_SECRET).toString();
-
-        addUserToCache(token, user._id);
+        axiosPostCall(process.env.AUTH_API_URL, _addUserToCache, { token, "id": user._id });
 
         res.cookie('token', token);
         res.cookie('_userId', user._id);
@@ -185,8 +143,7 @@ app.post('/login', (req, res) => {
 //Delete users/me/logout
 app.get('/me/logout', auth, (req, res) => {
     if (req.StatusCode === 200) {
-        removeUserFromCache(req.cookies.token);
-
+        axiosPostCall(process.env.AUTH_API_URL, _removeUserFromCache, { "token": req.cookies.token });
         res.sendStatus(200);
     }
     else {
@@ -199,11 +156,7 @@ app.get('/users', auth, (req, res) => {
     if (req.StatusCode === 200) {
         User.find().then((users) => {
             res.send({ users });
-        },
-            (e) => {
-                res.sendStatus(400);
-            }
-        );
+        }).catch((e) => { console.log(e); res.sendStatus(400); });
     }
     else {
         res.sendStatus(req.StatusCode);
@@ -215,7 +168,7 @@ app.get('/me', auth, (req, res) => {
     if (req.StatusCode === 200) {
         User.findById(req.cookies._userId).then((user) => {
             res.send(user);
-        });
+        }).catch((e) => { console.log(e); res.sendStatus(404); });
     }
     else {
         res.sendStatus(req.StatusCode);
