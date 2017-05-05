@@ -27,7 +27,7 @@ const _saveUserToDb = '/saveUserToDb';
 
 var axiosPostCall = (url, action, body, callback) => {
 
-axios.post(url + action, body)
+    axios.post(url + action, body)
         .catch(function (error) {
             console.log(error);
         });
@@ -133,11 +133,18 @@ app.post('/login', (req, res) => {
         var token = jwt.sign({ _id: user._id.toHexString() + Date.now() }, process.env.JWT_SECRET).toString();
         axiosPostCall(process.env.AUTH_API_URL, _addUserToCache, { token, "id": user._id });
 
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE");
+       res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
         res.cookie('token', token);
         res.cookie('_userId', user._id);
         res.sendStatus(200);
 
     }).catch((e) => { res.sendStatus(400); });
+});
+
+app.get('/ping', (req, res) => {
+    res.send("user service is up and running");
 });
 
 //Delete users/me/logout
