@@ -47,6 +47,14 @@ var auth = (req, res, next) => {
     });
 };
 
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", '*'); //<-- you can change this with a specific url like http://localhost:4200
+    res.header("Access-Control-Allow-Credentials", true);
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+    res.header("Access-Control-Allow-Headers", 'Origin,X-Requested-With,Content-Type,Accept,content-type,application/json');
+    next();
+});
+
 //CREATE USER
 app.post('/register', (req, res) => {
 
@@ -133,9 +141,7 @@ app.post('/login', (req, res) => {
         var token = jwt.sign({ _id: user._id.toHexString() + Date.now() }, process.env.JWT_SECRET).toString();
         axiosPostCall(process.env.AUTH_API_URL, _addUserToCache, { token, "id": user._id });
 
-        res.header("Access-Control-Allow-Origin", "*");
-        res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE");
-       res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+       
         res.cookie('token', token);
         res.cookie('_userId', user._id);
         res.sendStatus(200);
