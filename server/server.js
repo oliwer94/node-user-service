@@ -141,7 +141,8 @@ app.post('/login', (req, res) => {
         var token = jwt.sign({ _id: user._id.toHexString() + Date.now() }, process.env.JWT_SECRET).toString();
         axiosPostCall(process.env.AUTH_API_URL, _addUserToCache, { token, "id": user._id });
 
-       
+       res.header("token", token);
+       res.header("_userId", user._id);
         res.cookie('token', token);
         res.cookie('_userId', user._id);
         res.sendStatus(200);
