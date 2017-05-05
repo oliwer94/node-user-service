@@ -146,7 +146,7 @@ app.post('/login', (req, res) => {
         res.cookie('token', token);
         res.cookie('_userId', user._id);
         //res.sendStatus(200);
-        res.status(200).send(token);
+        res.status(200).send({token,"userid":user._id});
 
     }).catch((e) => { res.sendStatus(400); });
 });
