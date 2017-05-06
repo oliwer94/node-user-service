@@ -58,7 +58,7 @@ app.use(function(req, res, next) {
 //CREATE USER
 app.post('/register', (req, res) => {
 
-    var body = _.pick(req.body, ['email', 'password']);
+    var body = _.pick(req.body, ['email', 'password','username','country']);
     var user = new User(body);
     user.verified = false;
     var token = jwt.sign({ _id: user._id.toHexString() + Date.now() }, process.env.JWT_SECRET).toString();
