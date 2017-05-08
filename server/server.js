@@ -50,7 +50,7 @@ var auth = (req, res, next) => {
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", 'http://localhost:8000'); //<-- you can change this with a specific url like http://localhost:4200
     res.header("Access-Control-Allow-Credentials", "true");
-    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
     res.header("Access-Control-Allow-Headers", 'Origin,X-Requested-With,Content-Type,Accept,content-type,application/json');
     next();
 });
@@ -80,11 +80,11 @@ function sendVerificationEmail(email, token) {
     // setup email data with unicode symbols
 
     let mailOptions = {
-        from: 'Oliwer <bananbaszo@gmail.com>', // sender address
+        from: 'Meyespace <noreply.meyespace@gmail.com>', // sender address
         to: `oliwer94@gmail.com`,//`${email}`, // list of receivers
         subject: 'Welcome to Meyespace ✔', // Subject line
         text: `Welcome to Meyespace ${email.split("@")[0]}! In order to verify your account please visit the following link ${process.env.SITE_URL}/users/verify/${token}`, // plain text body
-        html: `<b>Welcome to Meyespace !</b> <p>In order to verify your account please visit the following link: </p><a href="${process.env.SITE_URL}/users/verify/${token}" > VERIFY ACCOUNT</a>`   // html body
+        html: `<b>Welcome to Meyespace  ${email.split("@")[0]}!</b> <p>In order to verify your account please visit the following link: </p><a href="${process.env.SITE_URL}/users/verify/${token}" > VERIFY ACCOUNT</a>`   // html body
     };
 
     //in test mode I do not send the message
@@ -143,8 +143,8 @@ app.post('/login', (req, res) => {
 
         // res.header("token", token);
         // res.header("_userId", user._id);
-        // res.cookie('token', token);
-        // res.cookie('_userId', user._id);
+         res.cookie('token', token);
+         res.cookie('_userId', user._id);
         //res.sendStatus(200);
         res.status(200).send({ token, "userId": user._id, "userName": user.username, "country": user.country });
 
