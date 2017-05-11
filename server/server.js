@@ -48,7 +48,7 @@ var auth = (req, res, next) => {
 };
 
 app.use(function (req, res, next) {
-    res.header("Access-Control-Allow-Origin", 'http://localhost:8000'); //<-- you can change this with a specific url like http://localhost:4200
+    res.header("Access-Control-Allow-Origin", '*'); //<-- you can change this with a specific url like http://localhost:4200
     res.header("Access-Control-Allow-Credentials", "true");
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
     res.header("Access-Control-Allow-Headers", 'Origin,X-Requested-With,Content-Type,Accept,content-type,application/json');
@@ -140,13 +140,16 @@ app.post('/login', (req, res) => {
 
         var token = jwt.sign({ _id: user._id.toHexString() + Date.now() }, process.env.JWT_SECRET).toString();
         axiosPostCall(process.env.AUTH_API_URL, _addUserToCache, { token, "id": user._id });
-
+        var userId = user._doc._id.toHexString();
         // res.header("token", token);
         // res.header("_userId", user._id);
-         res.cookie('token', token);
-         res.cookie('_userId', user._id);
+         res.cookie('token', token,{ expires: new Date(Date.now() + 60000)});
+         res.cookie('userId', userId,{ expires: new Date(Date.now() + 60000)});
+        // res.cookie('country', user._doc.country,{ expires: new Date(Date.now() + 60000)});
+        // res.cookie('userName', user._doc.username,{ expires: new Date(Date.now() + 60000)});
+
         //res.sendStatus(200);
-        res.status(200).send({ token, "userId": user._id, "userName": user.username, "country": user.country });
+        res.status(200).send({ "userName": user.username, "country": user.country });
 
     }).catch((e) => { res.sendStatus(400); });
 });
