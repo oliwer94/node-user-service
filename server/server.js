@@ -143,13 +143,13 @@ app.post('/login', (req, res) => {
         var userId = user._doc._id.toHexString();
         // res.header("token", token);
         // res.header("_userId", user._id);
-         res.cookie('token', token,{ expires: new Date(Date.now() + 60000)});
-         res.cookie('userId', userId,{ expires: new Date(Date.now() + 60000)});
+        // res.cookie('token', token,{ expires: new Date(Date.now() + 60000)}); ??
+        // res.cookie('userId', userId,{ expires: new Date(Date.now() + 60000)}); ??
         // res.cookie('country', user._doc.country,{ expires: new Date(Date.now() + 60000)});
         // res.cookie('userName', user._doc.username,{ expires: new Date(Date.now() + 60000)});
 
         //res.sendStatus(200);
-        res.status(200).send({ "userName": user.username, "country": user.country });
+        res.status(200).send({ token,userId,"userName": user.username, "country": user.country });
 
     }).catch((e) => { res.sendStatus(400); });
 });
