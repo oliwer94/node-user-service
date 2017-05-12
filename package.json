@@ -16,6 +16,7 @@
     "mongodb": "^2.2.24",
     "mongoose": "^4.8.4",
     "nodemailer": "^3.1.3",
+    "nodemailer-smtp-transport": "^2.7.4",
     "persistent-cache": "^1.1.1",
     "validator": "^7.0.0"
   },
@@ -26,7 +27,7 @@
     "start": "node server/server.js",
     "test": "export NODE_ENV=test || SET \"NODE_ENV=test\" && mocha server/**/*.test.js",
     "watch": "nodemon --exec 'test'",
-      "start.local.db": "cd c:/program files/mongodb/server/3.4/bin/  && mongod.exe  --dbpath /users/oliwer/mongo-data"
+    "start.local.db": "cd c:/program files/mongodb/server/3.4/bin/  && mongod.exe  --dbpath /users/oliwer/mongo-data"
   },
   "devDependencies": {
     "expect": "^1.20.2",
