@@ -67,7 +67,7 @@ app.post('/register', (req, res) => {
 
         sendVerificationEmail(user.email, token);
         axiosPostCall(process.env.AUTH_API_URL, _addUserToCache, { token, "id": user._id });
-        axiosPostCall(process.env.STAT_API_URL, _saveUserToDb, { _userId: user._id });
+        axiosPostCall(process.env.STAT_API_URL, _saveUserToDb, { "_userId": user._id,"country":user.country });
         res.status(200).send(user);
 
     }).catch((e) => {
