@@ -18,6 +18,7 @@ var PORT = process.env.PORT;
 var app = express();
 
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 const _addUserToCache = '/addUserToCache';
