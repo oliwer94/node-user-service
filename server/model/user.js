@@ -41,7 +41,10 @@ var UserSchema = new mongoose.Schema(
         active: {
             type: Boolean,
             required: false,
-        }
+        },
+        friends:[],
+        friend_request_sent:[],
+        friend_request_received:[]
     }
 );
 

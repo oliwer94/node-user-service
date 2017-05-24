@@ -68,7 +68,7 @@ app.post('/register', (req, res) => {
 
         sendVerificationEmail(user.email, token);
         axiosPostCall(process.env.AUTH_API_URL, _addUserToCache, { token, "id": user._id });
-        axiosPostCall(process.env.STAT_API_URL, _saveUserToDb, { "_userId": user._id,"country":user.country,"username":user.username });
+        axiosPostCall(process.env.STAT_API_URL, _saveUserToDb, { "_userId": user._id, "country": user.country, "username": user.username });
         res.status(200).send(user);
 
     }).catch((e) => {
@@ -141,16 +141,11 @@ app.post('/login', (req, res) => {
 
         var token = jwt.sign({ _id: user._id.toHexString() + Date.now() }, process.env.JWT_SECRET).toString();
         axiosPostCall(process.env.AUTH_API_URL, _addUserToCache, { token, "id": user._id });
+        // axiosPostCall(process.env.LIVEDATA_API_URL, "friends", { "username": user.username, "data": user.friends });
         var userId = user._doc._id.toHexString();
-        // res.header("token", token);
-        // res.header("_userId", user._id);
         // res.cookie('token', token,{ expires: new Date(Date.now() + 60000)}); ??
-        // res.cookie('userId', userId,{ expires: new Date(Date.now() + 60000)}); ??
-        // res.cookie('country', user._doc.country,{ expires: new Date(Date.now() + 60000)});
-        // res.cookie('userName', user._doc.username,{ expires: new Date(Date.now() + 60000)});
 
-        //res.sendStatus(200);
-        res.status(200).send({ token,userId,"userName": user.username, "country": user.country });
+        res.status(200).send({ token, userId, "userName": user.username, "country": user.country });
 
     }).catch((e) => { res.sendStatus(400); });
 });
@@ -171,10 +166,258 @@ app.get('/me/logout', auth, (req, res) => {
 });
 
 //GET ALL USERS 
-app.get('/users', auth, (req, res) => {
+app.get('/users/:id/:name', auth, (req, res) => {
     if (req.StatusCode === 200) {
-        User.find().then((users) => {
-            res.send({ users });
+        var name = req.params.name;
+        var userid = req.params.id;
+
+        User.findById(userid).then
+            ((user) => {
+
+                User.find({ $and: [{ "username": { $regex: `.*${name}.*` } }, { verified: true }] }).then((users) => {
+
+                    //var usernames = users.map(element => element.username);
+                    var listOfUsers = [];
+                    users.forEach(element => {
+
+                        if (element.username !== user.username) {
+                            var obj = {};
+                            obj.username = element.username;
+                            if (user.friends.indexOf(element.username) > -1) {
+                                obj.type = "friend";
+                            }
+                            else if (user.friend_request_received.indexOf(element.username) > -1) {
+                                obj.type = "received";
+                            }
+                            else if (user.friend_request_sent.indexOf(element.username) > -1) {
+                                obj.type = "sent";
+                            }
+                            else {
+                                obj.type = "stranger";
+                            }
+                            listOfUsers.push(obj);
+                        }
+                    });
+
+                    res.send({ listOfUsers });
+                }).catch((e) => { console.log(e); res.sendStatus(400); });
+
+            })
+    }
+    else {
+        res.sendStatus(req.StatusCode);
+    }
+});
+
+//Add friend
+app.post('/addFriend/:id', auth, (req, res) => {
+    if (req.StatusCode === 200) {
+        var userid = req.params.id;
+        var body = _.pick(req.body, ['username']);
+        User.findById(userid).then((user) => {
+
+            user.friend_request_sent.push(body.username);
+
+            var idObj = user._id;
+            delete user._id;
+
+            User.findByIdAndUpdate(idObj, { $set: user }, { new: true }).then((newstat) => {
+                User.find({ "username": body.username }).then((otheruser) => {
+                    otheruser[0].friend_request_received.push(user.username);
+
+                    var idObj = otheruser[0]._id;
+                    delete otheruser[0]._id;
+
+                    User.findByIdAndUpdate(idObj, { $set: otheruser[0] }, { new: true }).then((newstat) => {
+
+                        res.sendStatus(200);
+                    });
+
+                }).catch((e) => { console.log(e); res.sendStatus(400); });
+            });
+        });
+    }
+    else {
+        res.sendStatus(req.StatusCode);
+    }
+});
+
+app.post('/removeFriend/:id', auth, (req, res) => {
+    if (req.StatusCode === 200) {
+        var userid = req.params.id;
+        var body = _.pick(req.body, ['username']);
+        User.findById(userid).then((user) => {
+
+            var index = user.friends.indexOf(body.username);
+            user.friends.splice(index, 1);
+
+            var idObj = user._id;
+            delete user._id;
+
+            User.findByIdAndUpdate(idObj, { $set: user }, { new: true }).then((newstat) => {
+                User.find({ "username": body.username }).then((otherusers) => {
+                    otheruser = otherusers[0];
+                    var index = otheruser.friends.indexOf(user.username);
+                    otheruser.friends.splice(index, 1);
+
+                    var idObj = otheruser._id;
+                    delete otheruser._id;
+
+                    User.findByIdAndUpdate(idObj, { $set: otheruser }, { new: true }).then((newstat) => {
+
+                        res.sendStatus(200);
+                    });
+
+                }).catch((e) => { console.log(e); res.sendStatus(400); });
+            });
+        });
+    }
+    else {
+        res.sendStatus(req.StatusCode);
+    }
+});
+
+app.post('/rejectFriend/:id', auth, (req, res) => {
+    if (req.StatusCode === 200) {
+        var userid = req.params.id;
+        var body = _.pick(req.body, ['username']);
+        User.findById(userid).then((user) => {
+
+            var index = user.friend_request_received.indexOf(body.username);
+            user.friend_request_received.splice(index, 1);
+
+            var idObj = user._id;
+            delete user._id;
+
+            User.findByIdAndUpdate(idObj, { $set: user }, { new: true }).then((newstat) => {
+                User.find({ "username": body.username }).then((otherusers) => {
+                    otheruser = otherusers[0];
+                    var index = otheruser.friend_request_sent.indexOf(user.username);
+                    otheruser.friend_request_sent.splice(index, 1);
+
+                    var idObj = otheruser._id;
+                    delete otheruser._id;
+
+                    User.findByIdAndUpdate(idObj, { $set: otheruser }, { new: true }).then((newstat) => {
+
+                        res.sendStatus(200);
+                    });
+
+                }).catch((e) => { console.log(e); res.sendStatus(400); });
+            });
+        });
+    }
+    else {
+        res.sendStatus(req.StatusCode);
+    }
+});
+
+app.post('/rewokeFriend/:id', auth, (req, res) => {
+    if (req.StatusCode === 200) {
+        var userid = req.params.id;
+        var body = _.pick(req.body, ['username']);
+        User.findById(userid).then((user) => {
+
+            var index = user.friend_request_sent.indexOf(body.username);
+            user.friend_request_sent.splice(index, 1);
+
+            var idObj = user._id;
+            delete user._id;
+
+            User.findByIdAndUpdate(idObj, { $set: user }, { new: true }).then((newstat) => {
+                User.find({ "username": body.username }).then((otherusers) => {
+                    otheruser = otherusers[0];
+                    var index = otheruser.friend_request_received.indexOf(user.username);
+                    otheruser.friend_request_received.splice(index, 1);
+
+                    var idObj = otheruser._id;
+                    delete otheruser._id;
+
+                    User.findByIdAndUpdate(idObj, { $set: otheruser }, { new: true }).then((newstat) => {
+
+                        res.sendStatus(200);
+                    });
+
+                }).catch((e) => { console.log(e); res.sendStatus(400); });
+            });
+        });
+    }
+    else {
+        res.sendStatus(req.StatusCode);
+    }
+});
+
+app.post('/acceptFriend/:id', auth, (req, res) => {
+    if (req.StatusCode === 200) {
+        var userid = req.params.id;
+        var body = _.pick(req.body, ['username']);
+        User.findById(userid).then((user) => {
+
+            var index = user.friend_request_received.indexOf(body.username);
+            user.friend_request_received.splice(index, 1);
+
+            user.friends.push(body.username);
+
+            var idObj = user._id;
+            delete user._id;
+
+            User.findByIdAndUpdate(idObj, { $set: user }, { new: true }).then((newstat) => {
+                User.find({ "username": body.username }).then((otherusers) => {
+                    otheruser = otherusers[0];
+                    var index = otheruser.friend_request_sent.indexOf(user.username);
+                    otheruser.friend_request_sent.splice(index, 1);
+
+                    otheruser.friends.push(user.username);
+
+                    var idObj = otheruser._id;
+                    delete otheruser._id;
+
+                    User.findByIdAndUpdate(idObj, { $set: otheruser }, { new: true }).then((newstat) => {
+
+                        res.sendStatus(200);
+                    });
+
+                }).catch((e) => { console.log(e); res.sendStatus(400); });
+            });
+        });
+    }
+    else {
+        res.sendStatus(req.StatusCode);
+    }
+});
+
+app.get('/getFriends/:id', auth, (req, res) => {
+    if (req.StatusCode === 200) {
+        var userid = req.params.id;
+        User.findById(userid).then((user) => {
+            var friendList = user.friends;
+            res.send({ friendList });
+        }).catch((e) => { console.log(e); res.sendStatus(400); });
+    }
+    else {
+        res.sendStatus(req.StatusCode);
+    }
+});
+
+app.get('/getReceivedFriendRequests/:id', auth, (req, res) => {
+    if (req.StatusCode === 200) {
+        var userid = req.params.id;
+        User.findById(userid).then((user) => {
+            var receivedList = user.friend_request_received;
+            res.send({ receivedList });
+        }).catch((e) => { console.log(e); res.sendStatus(400); });
+    }
+    else {
+        res.sendStatus(req.StatusCode);
+    }
+});
+
+app.get('/getSentFriendRequests/:id', auth, (req, res) => {
+    if (req.StatusCode === 200) {
+       var userid = req.params.id;
+        User.findById(userid).then((user) => {
+            var sentList = user.friend_request_sent;
+            res.send({ sentList });
         }).catch((e) => { console.log(e); res.sendStatus(400); });
     }
     else {
