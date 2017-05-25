@@ -141,9 +141,9 @@ app.post('/login', (req, res) => {
 
         var token = jwt.sign({ _id: user._id.toHexString() + Date.now() }, process.env.JWT_SECRET).toString();
         axiosPostCall(process.env.AUTH_API_URL, _addUserToCache, { token, "id": user._id });
-        // axiosPostCall(process.env.LIVEDATA_API_URL, "friends", { "username": user.username, "data": user.friends });
+        axiosPostCall(process.env.LIVEDATA_API_URL, "/friends", { "username": user.username, "friends": user.friends });
         var userId = user._doc._id.toHexString();
-        // res.cookie('token', token,{ expires: new Date(Date.now() + 60000)}); ??
+        res.cookie('token', token, { expires: new Date(Date.now() + 600000) });
 
         res.status(200).send({ token, userId, "userName": user.username, "country": user.country });
 
@@ -154,11 +154,32 @@ app.get('/ping', (req, res) => {
     res.send("user service is up and running");
 });
 
+app.get('/getOnlineFriends/:id', auth, (req, res) => {
+    User.findById(req.params.id).then
+        ((user) => {
+            axios.post(process.env.LIVEDATA_API_URL + "/getFriends", { "friends": user.friends })
+                .then((response, request) => {
+                    var body = _.pick(response.data, ['onlineFriends']);
+                    var onlineFriends = body.onlineFriends;
+                    res.status(200).send({ onlineFriends });
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+        }).catch((e) => { console.log(e); res.sendStatus(400); });
+});
+
 //Delete users/me/logout
-app.get('/me/logout', auth, (req, res) => {
+app.get('/logout/:id', auth, (req, res) => {
     if (req.StatusCode === 200) {
-        axiosPostCall(process.env.AUTH_API_URL, _removeUserFromCache, { "token": req.cookies.token });
-        res.sendStatus(200);
+        User.findById(req.params.id).then
+            ((user) => {
+
+                axiosPostCall(process.env.AUTH_API_URL, _removeUserFromCache, { "token": req.cookies.token });
+                axiosPostCall(process.env.LIVEDATA_API_URL, "/offlinefriend", { "username": user.username, "friends": user.friends });
+                res.sendStatus(200);
+            })
+            .catch((e) => { console.log(e); res.sendStatus(400); });
     }
     else {
         res.sendStatus(req.StatusCode);
@@ -209,6 +230,10 @@ app.get('/users/:id/:name', auth, (req, res) => {
     }
 });
 
+var sendNotification = (notification, receiver) => {
+    axiosPostCall(process.env.LIVEDATA_API_URL, "/notification", { notification, "username": receiver });
+}
+
 //Add friend
 app.post('/addFriend/:id', auth, (req, res) => {
     if (req.StatusCode === 200) {
@@ -229,6 +254,8 @@ app.post('/addFriend/:id', auth, (req, res) => {
                     delete otheruser[0]._id;
 
                     User.findByIdAndUpdate(idObj, { $set: otheruser[0] }, { new: true }).then((newstat) => {
+
+                        sendNotification(`${user.username} has sent you a friend request.`, otheruser[0].username);
 
                         res.sendStatus(200);
                     });
@@ -264,7 +291,8 @@ app.post('/removeFriend/:id', auth, (req, res) => {
                     delete otheruser._id;
 
                     User.findByIdAndUpdate(idObj, { $set: otheruser }, { new: true }).then((newstat) => {
-
+                        axiosPostCall(process.env.LIVEDATA_API_URL, "/offlinefriend", { "username": user.username, "friends": otheruser.username });
+                        axiosPostCall(process.env.LIVEDATA_API_URL, "/offlinefriend", { "username": otheruser.username, "friends": user.username });
                         res.sendStatus(200);
                     });
 
@@ -300,6 +328,7 @@ app.post('/rejectFriend/:id', auth, (req, res) => {
 
                     User.findByIdAndUpdate(idObj, { $set: otheruser }, { new: true }).then((newstat) => {
 
+                        sendNotification(`${user.username} has declined your friend request.`, otheruser.username);
                         res.sendStatus(200);
                     });
 
@@ -373,7 +402,9 @@ app.post('/acceptFriend/:id', auth, (req, res) => {
                     delete otheruser._id;
 
                     User.findByIdAndUpdate(idObj, { $set: otheruser }, { new: true }).then((newstat) => {
-
+                        sendNotification(`${user.username} has accepted your friend request.`, otheruser.username);
+                        axiosPostCall(process.env.LIVEDATA_API_URL, "/friends", { "username": user.username, "friends": otheruser.username });
+                        axiosPostCall(process.env.LIVEDATA_API_URL, "/friends", { "username": otheruser.username, "friends": user.username });
                         res.sendStatus(200);
                     });
 
@@ -414,7 +445,7 @@ app.get('/getReceivedFriendRequests/:id', auth, (req, res) => {
 
 app.get('/getSentFriendRequests/:id', auth, (req, res) => {
     if (req.StatusCode === 200) {
-       var userid = req.params.id;
+        var userid = req.params.id;
         User.findById(userid).then((user) => {
             var sentList = user.friend_request_sent;
             res.send({ sentList });
