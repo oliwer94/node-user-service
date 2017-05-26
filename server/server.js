@@ -35,7 +35,7 @@ var axiosPostCall = (url, action, body, callback) => {
 };
 
 var auth = (req, res, next) => {
-    console.log("asdasd token",token);
+    console.log("asdasd token",req.cookies.token);
     axios.post(process.env.AUTH_API_URL + '/authenticate', {
         token: req.cookies.token
     }).then((response) => {
