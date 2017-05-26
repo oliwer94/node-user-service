@@ -143,7 +143,7 @@ app.post('/login', (req, res) => {
         axiosPostCall(process.env.AUTH_API_URL, _addUserToCache, { token, "id": user._id });
         axiosPostCall(process.env.LIVEDATA_API_URL, "/friends", { "username": user.username, "friends": user.friends });
         var userId = user._doc._id.toHexString();
-        res.cookie('token', token, { expires: new Date(Date.now() + 600000) });
+        //res.cookie('token', token, { expires: new Date(Date.now() + 600000) });
 
         res.status(200).send({ token, userId, "userName": user.username, "country": user.country });
 
