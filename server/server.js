@@ -35,9 +35,10 @@ var axiosPostCall = (url, action, body, callback) => {
 };
 
 var auth = (req, res, next) => {
-    console.log("asdasd token",req.cookies.token);
+    console.log("asdasd token", req.cookies.token, req.header('token'));
+    var token = req.cookies.token || req.body.token || req.header('token');
     axios.post(process.env.AUTH_API_URL + '/authenticate', {
-        token: req.cookies.token
+        token
     }).then((response) => {
         req.StatusCode = response.status;
         next();
@@ -52,7 +53,7 @@ app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", process.env.CORS);//'https://meyespace-frontend.com'); //<-- you can change this with a specific url like http://localhost:4200
     res.header("Access-Control-Allow-Credentials", "true");
     res.header('Access-Control-Allow-Methods', 'OPTIONS,GET,PUT,POST,DELETE');
-    res.header("Access-Control-Allow-Headers", 'Authorization,Origin,X-Requested-With,Content-Type,Accept,content-type,application/json');
+    res.header("Access-Control-Allow-Headers", 'token,Authorization,Origin,X-Requested-With,Content-Type,Accept,content-type,application/json');
     next();
 });
 
