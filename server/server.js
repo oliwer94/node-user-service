@@ -13,6 +13,7 @@ const axios = require('axios');
 var { mongoose } = require('./db/mongoose');
 var { User } = require('./model/user');
 var { transporter } = require('./email/email');
+//var { auth } = require('./auth/authenthication');
 
 var PORT = process.env.PORT;
 var app = express();
@@ -35,21 +36,31 @@ var axiosPostCall = (url, action, body, callback) => {
 };
 
 var auth = (req, res, next) => {
+    
     var token = req.cookies.token || req.body.token || req.header('token');
-    axios.post(process.env.AUTH_API_URL + '/authenticate', {
-        token
-    }).then((response) => {
-        req.StatusCode = response.status;
-        next();
-    }).catch(function (error) {
-        console.log(error.message);
-        req.StatusCode = error.response.status;
-        next();
-    });
+
+    axios.post(process.env.AUTH_API_URL + '/authenticate',
+        {
+            token
+        }).then((response) => {
+            req.StatusCode = response.status;
+            next();
+        }).catch(function (error) 
+        {
+            console.log(error.message);
+            if (error.message.indexOf("ECONNREFUSED") > -1) 
+            {
+                res.sendStatus(500);
+            }
+            else
+             {
+                res.sendStatus(error.response.status);
+            }
+        });
 };
 
 app.use(function (req, res, next) {
-    res.header("Access-Control-Allow-Origin", process.env.CORS);//'https://meyespace-frontend.com'); //<-- you can change this with a specific url like http://localhost:4200
+    res.header("Access-Control-Allow-Origin", process.env.CORS);//https://meyespace-frontend,herokuapp.com
     res.header("Access-Control-Allow-Credentials", "true");
     res.header('Access-Control-Allow-Methods', 'OPTIONS,GET,PUT,POST,DELETE');
     res.header("Access-Control-Allow-Headers", 'token,Authorization,Origin,X-Requested-With,Content-Type,Accept,content-type,application/json');
@@ -174,12 +185,13 @@ app.get('/logout/:id', auth, (req, res) => {
     if (req.StatusCode === 200) {
         User.findById(req.params.id).then
             ((user) => {
-
                 axiosPostCall(process.env.AUTH_API_URL, _removeUserFromCache, { "token": req.cookies.token });
                 axiosPostCall(process.env.LIVEDATA_API_URL, "/offlinefriend", { "username": user.username, "friends": user.friends });
-                res.sendStatus(200);
+                res.status(200).send("OK");
             })
-            .catch((e) => { console.log(e); res.sendStatus(400); });
+            .catch((e) => {
+                console.log(e); res.sendStatus(400);
+            });
     }
     else {
         res.sendStatus(req.StatusCode);
@@ -242,7 +254,6 @@ app.post('/addFriend/:id', auth, (req, res) => {
         User.findById(userid).then((user) => {
 
             user.friend_request_sent.push(body.username);
-
             var idObj = user._id;
             delete user._id;
 
@@ -283,7 +294,7 @@ app.post('/removeFriend/:id', auth, (req, res) => {
 
             User.findByIdAndUpdate(idObj, { $set: user }, { new: true }).then((newstat) => {
                 User.find({ "username": body.username }).then((otherusers) => {
-                    otheruser = otherusers[0];
+                    var otheruser = otherusers[0];
                     var index = otheruser.friends.indexOf(user.username);
                     otheruser.friends.splice(index, 1);
 

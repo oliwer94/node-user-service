@@ -9,7 +9,7 @@
         "MAIN_API_URL":""
     },
     "development": {
-        "PORT": 3000,
+        "PORT": 3001,
         "MONGODB_URI": "",
         "JWT_SECRET":"",
         "GMAIL_USERNAME":"",
@@ -19,4 +19,5 @@
     }    
 }
 
-//for production you have to add  these as environment variables.
+//for production you have to 
+//add  these as environment variables.
