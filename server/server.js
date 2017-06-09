@@ -68,7 +68,7 @@ app.use(function (req, res, next) {
 });
 
 //loaderio stress test confirmation
-app.post('/loaderio-30181893c284326698b1d75ee0ffedc3', (req, res) => {
+app.get('/loaderio-30181893c284326698b1d75ee0ffedc3', (req, res) => {
     res.send("loaderio-30181893c284326698b1d75ee0ffedc3");
 });
 
