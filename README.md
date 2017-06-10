@@ -2,8 +2,8 @@
 
 ## Requirements 
 
-NodeJS 6+ installed.
-MongoDB local instance
+- NodeJS 6+ installed. <br>
+- MongoDB local instance.
 
 ## Installation
 
