@@ -98,7 +98,7 @@ function sendVerificationEmail(email, token) {
 
     let mailOptions = {
         from: 'Meyespace <noreply.meyespace@gmail.com>', // sender address
-        to: `oliwer94@gmail.com`,//`${email}`, // list of receivers
+        to: `${email}`, // list of receivers
         subject: 'Welcome to Meyespace ✔', // Subject line
         text: `Welcome to Meyespace ${email.split("@")[0]}! In order to verify your account please visit the following link ${process.env.SITE_URL}/users/verify/${token}`, // plain text body
         html: `<b>Welcome to Meyespace  ${email.split("@")[0]}!</b> <p>In order to verify your account please visit the following link: </p><a href="${process.env.SITE_URL}/users/verify/${token}" > VERIFY ACCOUNT</a>`   // html body
